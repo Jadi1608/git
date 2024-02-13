@@ -341,8 +341,10 @@ See also linkgit:git-reflog[1].
 Under `--pretty=reference`, this information will not be shown at all.
 
 --merge::
-	After a failed merge, show refs that touch files having a
-	conflict and don't exist on all heads to merge.
+	Show commits touching conflicted paths in the range `HEAD...$OTHER`,
+	where `$OTHER` is the first existing pseudoref in `MERGE_HEAD`,
+	`CHERRY_PICK_HEAD`, `REVERT_HEAD` or `REBASE_HEAD`. Only works
+	when the index has unmerged entries.
 
 --boundary::
 	Output excluded boundary commits. Boundary commits are
