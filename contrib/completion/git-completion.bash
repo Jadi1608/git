@@ -556,6 +556,47 @@ __gitcomp_file ()
 	true
 }
 
+# Completion for subcommands in commands that follow the syntax:
+#
+#    git <command> <subcommand>
+#
+# 1: List of possible completion words.
+# Returns false if the current word is not a possible subcommand
+# (possitioned after the command), or if no option is found in
+# the list provided.
+__gitcomp_subcommand ()
+{
+	local subcommands="$1"
+
+	if [ $cword -eq $(($__git_cmd_idx + 1)) ]; then
+		__gitcomp "$subcommands"
+
+		test -n "$COMPREPLY"
+	else
+		false
+	fi
+}
+
+# Find the current subcommand for commands that follow the syntax:
+#
+#    git <command> <subcommand>
+#
+# 1: List of possible subcommands.
+# 2: Optional subcommand to return when none is found.
+__git_find_subcommand ()
+{
+	local subcommand subcommands="$1" default_subcommand="$2"
+
+	for subcommand in $subcommands; do
+		if [ "$subcommand" = "${words[__git_cmd_idx+1]}" ]; then
+			echo $subcommand
+			return
+		fi
+	done
+
+	echo $default_subcommand
+}
+
 # Execute 'git ls-files', unless the --committable option is specified, in
 # which case it runs 'git diff-index' to find out the files that can be
 # committed.  It return paths relative to the directory specified in the first
@@ -2471,14 +2512,24 @@ _git_rebase ()
 
 _git_reflog ()
 {
-	local subcommands="show delete expire"
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	local subcommand subcommands="show delete expire"
 
-	if [ -z "$subcommand" ]; then
-		__gitcomp "$subcommands"
-	else
-		__git_complete_refs
+	if __gitcomp_subcommand "$subcommands"; then
+		return
 	fi
+
+	subcommand="$(__git_find_subcommand "$subcommands" "show")"
+
+	case "$subcommand,$cur" in
+	show,--*)
+		__gitcomp "
+			$__git_log_common_options
+			"
+		return
+		;;
+	esac
+
+	__git_complete_refs
 }
 
 __git_send_email_confirm_options="always never auto cc compose"

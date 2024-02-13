@@ -2804,6 +2804,17 @@ test_expect_success 'git clone --config= - value' '
 	EOF
 '
 
+test_expect_success 'git reflog show' '
+	test_when_finished "git checkout -" &&
+	git checkout -b shown &&
+	test_completion "git reflog sho" "show " &&
+	test_completion "git reflog show sho" "shown " &&
+	test_completion "git reflog shown sho" "shown " &&
+	test_completion "git reflog --unt" "--until=" &&
+	test_completion "git reflog show --unt" "--until=" &&
+	test_completion "git reflog shown --unt" "--until="
+'
+
 test_expect_success 'options with value' '
 	test_completion "git merge -X diff-algorithm=" <<-\EOF
 
