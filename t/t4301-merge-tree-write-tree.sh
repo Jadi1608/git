@@ -951,4 +951,28 @@ test_expect_success '--merge-base with tree OIDs' '
 	test_cmp with-commits with-trees
 '
 
+test_expect_success 'error out on missing tree objects' '
+	git init --bare missing-tree.git &&
+	git rev-list side3 >list &&
+	git rev-parse side3^: >list &&
+	git pack-objects missing-tree.git/objects/pack/side3-tree-is-missing <list &&
+	side3=$(git rev-parse side3) &&
+	test_must_fail git --git-dir=missing-tree.git merge-tree $side3^ $side3 >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'error out on missing blob objects' '
+	seq1=$(test_seq 1 10 | git hash-object -w --stdin) &&
+	seq2=$(test_seq 1 11 | git hash-object -w --stdin) &&
+	seq3=$(test_seq 0 10 | git hash-object -w --stdin) &&
+	tree1=$(printf "100644 blob %s\tsequence" $seq1 | git mktree) &&
+	tree2=$(printf "100644 blob %s\tsequence" $seq2 | git mktree) &&
+	tree3=$(printf "100644 blob %s\tsequence" $seq3 | git mktree) &&
+	git init --bare missing-blob.git &&
+	test_write_lines $seq1 $seq3 $tree1 $tree2 $tree3 |
+	git pack-objects missing-blob.git/objects/pack/side1-whatever-is-missing &&
+	test_must_fail git --git-dir=missing-blob.git merge-tree --merge-base=$tree1 $tree2 $tree3 >actual &&
+	test_must_be_empty actual
+'
+
 test_done
