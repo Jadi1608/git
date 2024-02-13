@@ -545,6 +545,15 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	 *
 	 * Let "--missing" to conditionally set fetch_if_missing.
 	 */
+	/*
+	 * NEEDSWORK: These dump loops to look for some options early
+	 * are ugly. We really need setup_revisions() to have a
+	 * mechanism to allow and disallow some sets of options for
+	 * different commands (like rev-list, replay, etc). Such
+	 * mechanism should do an early parsing of option and be able
+	 * to manage the `--exclude-promisor-objects` and `--missing=...`
+	 * options below.
+	 */
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
@@ -753,8 +762,12 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	if (arg_print_omitted)
 		oidset_init(&omitted_objects, DEFAULT_OIDSET_SIZE);
-	if (arg_missing_action == MA_PRINT)
+	if (arg_missing_action == MA_PRINT) {
 		oidset_init(&missing_objects, DEFAULT_OIDSET_SIZE);
+		/* Already add missing tips */
+		oidset_insert_from_set(&missing_objects, &revs.missing_commits);
+		oidset_clear(&revs.missing_commits);
+	}
 
 	traverse_commit_list_filtered(
 		&revs, show_commit, show_object, &info,
